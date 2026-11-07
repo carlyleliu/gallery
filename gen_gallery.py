@@ -113,10 +113,10 @@ def card_list_page(title: str, poem: str, cards: list[dict], depth: int) -> str:
         loc = f'<font size="3">:material-map-marker: {c["location"]}</font>' if c.get("location") else ""
         items.append(
             f'- ### **[{c["name"]}]({c["href"]})** {loc}\n\n'
-            f'  ---\n\n'
-            f'  <a href="{c["href"]}"><img src="{SVG_PH}" alt="{c["name"]}" '
+            f'    ---\n\n'
+            f'    <a href="{c["href"]}"><img src="{SVG_PH}" alt="{c["name"]}" '
             f'class="no-glb" data-lazy-src="{cover}"></a>\n\n'
-            f'  {c.get("desc", "")}\n'
+            f'    {c.get("desc", "")}\n'
         )
     body = "\n".join(items)
     head = f"# {title}\n\n{poem}\n\n" if poem else f"# {title}\n\n"
