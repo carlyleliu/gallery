@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 # 桂林
 
 <div class="photo-wall-s2">

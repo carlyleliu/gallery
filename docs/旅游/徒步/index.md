@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 # 徒步
 
 <div class="grid cards index-info" markdown>

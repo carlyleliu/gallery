@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 <style>
 .carousel-item--1 .carousel-item__image { background-image: url('pictures/yunnan/9V5A7008.jpg'); }
 .carousel-item--2 .carousel-item__image { background-image: url('pictures/guilin/9V5A4177.jpg'); }

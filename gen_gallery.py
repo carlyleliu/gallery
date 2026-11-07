@@ -183,10 +183,13 @@ def gen_homepage(leaves: list[dict]) -> str:
     return carousel + "\n\n" + "\n\n".join(stories) + "\n"
 
 
+FRONTMATTER = "---\nhide:\n  - navigation\n---\n\n"
+
+
 def write(rel: str, content: str):
     out = DOCS / rel
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(content, encoding="utf-8")
+    out.write_text(FRONTMATTER + content, encoding="utf-8")
     print(f"生成: docs/{rel}")
 
 

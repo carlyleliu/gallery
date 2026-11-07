@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 # 云南
 
 <div class="photo-wall-s2">

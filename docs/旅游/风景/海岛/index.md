@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 # 海岛
 
 <div class="photo-wall-s2">

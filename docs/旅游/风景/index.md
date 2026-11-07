@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 # 风景
 
 <div class="grid cards index-info" markdown>

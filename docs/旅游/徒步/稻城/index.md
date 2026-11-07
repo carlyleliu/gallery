@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 # 稻城
 
 <div class="photo-wall-s2">
