@@ -101,7 +101,7 @@ def wall_page(title: str, poem: str, photos: list[Path], folder: str, depth: int
         )
     body = "\n".join(items)
     head = f"# {title}\n\n{poem}\n\n" if poem else f"# {title}\n\n"
-    return head + f'<div class="photo-wall-s2">\n\n{body}\n\n</div>\n'
+    return head + f'<div class="photo-wall">\n\n{body}\n\n</div>\n'
 
 
 def card_list_page(title: str, poem: str, cards: list[dict], depth: int) -> str:

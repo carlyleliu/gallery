@@ -5,7 +5,7 @@ hide:
 
 # 云南
 
-<div class="photo-wall-s2">
+<div class="photo-wall">
 
 <div class="photo">
 <a class="glightbox" data-type="image" data-width="auto" data-height="90%" href="../../../pictures/yunnan/9V5A7008.jpg" data-desc-position="bottom">

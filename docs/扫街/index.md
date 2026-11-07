@@ -5,7 +5,7 @@ hide:
 
 # 扫街
 
-<div class="photo-wall-s2">
+<div class="photo-wall">
 
 <div class="photo">
 <a class="glightbox" data-type="image" data-width="auto" data-height="90%" href="../pictures/shenzhenwan/9V5A1519.jpg" data-desc-position="bottom">
