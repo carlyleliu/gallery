@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """
-gen_gallery.py — 扫描 docs/pictures/<分类>/ 下的照片，自动生成画廊页面。
+gen_gallery.py — 扫描 pictures/<相册>/ 下的照片，自动生成画廊页面。
 
 用法:
     python gen_gallery.py
 
-目录约定:
-    docs/pictures/游记/*.jpg   ->  docs/游记/index.md (照片墙页面)
-    首页 docs/index.md 的轮播图按分类生成，封面取该分类第一张照片。
+结构（对应 mkdocs.yml 中的 nav）:
+    首页 index.md                     轮播图 + 故事流
+    旅游/index.md                     二级分类卡片列表
+    旅游/徒步/index.md                地点卡片列表（复刻原站"游记"布局）
+    旅游/徒步/云南/index.md           照片墙
+    扫街/index.md                     照片墙（直接挂相册）
 
-分类的英文副标题和诗句在下方 CATEGORIES 中维护；
-首页故事流在 STORIES 中维护。新增分类文件夹后在此补充即可。
+照片目录: 项目根目录 pictures/<相册>/*.jpg（docs/pictures 是指向它的软链接）
+新增/调整地点时修改下方 GALLERIES 配置，并同步 mkdocs.yml 的 nav。
 """
 from pathlib import Path
 from urllib.parse import quote
@@ -21,28 +24,31 @@ PIC_ROOT = DOCS / "pictures"
 IMG_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"}
 
 # ---------------------------------------------------------------- 配置区
-# key = pictures/ 下的文件夹名（同时也是生成的页面路径和标题）
-CATEGORIES = {
-    "haidao": {
-        "subtitle": "HAIDAO",
-        "poem": "",
+# folder = pictures/ 下的相册文件夹名；location/desc 显示在卡片上
+GALLERIES = {
+    "旅游": {
+        "subtitle": "TRAVEL",
+        "poem": "少年负壮气，奋烈自有时。<br>落花踏尽游何处，笑入胡姬酒肆中。",
+        "sections": {
+            "徒步": {
+                "locations": [
+                    {"name": "云南", "folder": "yunnan", "location": "云南", "desc": ""},
+                    {"name": "桂林", "folder": "guilin", "location": "广西 · 桂林", "desc": ""},
+                    {"name": "稻城", "folder": "daocheng", "location": "四川 · 甘孜", "desc": ""},
+                ],
+            },
+            "风景": {
+                "locations": [
+                    {"name": "海岛", "folder": "haidao", "location": "", "desc": ""},
+                ],
+            },
+        },
     },
-    "yunnan": {
-        "subtitle": "YUNNAN",
-        "poem": "",
-    },
-    "shenzhenwan": {
-        "subtitle": "SHENZHENWAN",
-        "poem": "",
-    },
-    "guilin": {
-        "subtitle": "GUILIN",
-        "poem": "",
-    },
-    "daocheng": {
-        "subtitle": "DAOCHENG",
-        "poem": "",
-    },
+}
+
+# 顶层独立照片墙页面：标题 -> 相册文件夹
+PAGES = {
+    "扫街": {"folder": "shenzhenwan", "poem": ""},
 }
 
 # 首页照片故事流：img 为 pictures/ 下的相对路径，side 决定竖排文字在左还是右
@@ -65,9 +71,13 @@ STORIES = [
 SVG_PH = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'%3E%3C/svg%3E"
 
 
-def list_photos(category_dir: Path):
+def list_photos(folder: str):
+    d = PIC_ROOT / folder
+    if not d.is_dir():
+        print(f"  [警告] 相册不存在: pictures/{folder}")
+        return []
     return sorted(
-        p for p in category_dir.iterdir()
+        p for p in d.iterdir()
         if p.is_file() and p.suffix.lower() in IMG_EXTS
     )
 
@@ -76,14 +86,12 @@ def url(path: str) -> str:
     return "/".join(quote(seg) for seg in path.split("/"))
 
 
-def gen_category_page(category: str, photos: list[Path]) -> str:
-    """生成单个分类的照片墙页面（复刻原站 glightbox + 懒加载结构）"""
-    meta = CATEGORIES.get(category, {})
-    poem = meta.get("poem", "").replace("<br>", " ")
+def wall_page(title: str, poem: str, photos: list[Path], folder: str, depth: int) -> str:
+    """照片墙页面（glightbox + 懒加载）。depth = 页面相对根目录的深度，用于回指 pictures/"""
+    prefix = "../" * depth
     items = []
     for ph in photos:
-        rel = f"pictures/{category}/{ph.name}"
-        u = url(f"../{rel}")
+        u = url(f"{prefix}pictures/{folder}/{ph.name}")
         items.append(
             f'<div class="photo">\n'
             f'<a class="glightbox" data-type="image" data-width="auto" '
@@ -91,20 +99,35 @@ def gen_category_page(category: str, photos: list[Path]) -> str:
             f'<img src="{SVG_PH}" alt="{ph.stem}" data-lazy-src="{u}">\n'
             f'</a>\n</div>'
         )
-    wall = "\n".join(items)
-    return (
-        f"# {category}\n\n"
-        f"{poem}\n\n"
-        f'<div class="photo-wall-s2">\n\n{wall}\n\n</div>\n'
-    )
+    body = "\n".join(items)
+    head = f"# {title}\n\n{poem}\n\n" if poem else f"# {title}\n\n"
+    return head + f'<div class="photo-wall-s2">\n\n{body}\n\n</div>\n'
 
 
-def gen_homepage(categories: dict[str, list[Path]]) -> str:
-    """生成首页：轮播图 + 照片故事流（复刻原站结构）"""
+def card_list_page(title: str, poem: str, cards: list[dict], depth: int) -> str:
+    """卡片列表页（复刻原站"游记"布局：标题+定位+封面+描述）。cards: name/href/cover/desc/location"""
+    prefix = "../" * depth
+    items = []
+    for c in cards:
+        cover = url(prefix + c["cover"]) if c.get("cover") else ""
+        loc = f'<font size="3">:material-map-marker: {c["location"]}</font>' if c.get("location") else ""
+        items.append(
+            f'- ### **[{c["name"]}]({c["href"]})** {loc}\n\n'
+            f'  ---\n\n'
+            f'  <a href="{c["href"]}"><img src="{SVG_PH}" alt="{c["name"]}" '
+            f'class="no-glb" data-lazy-src="{cover}"></a>\n\n'
+            f'  {c.get("desc", "")}\n'
+        )
+    body = "\n".join(items)
+    head = f"# {title}\n\n{poem}\n\n" if poem else f"# {title}\n\n"
+    return head + f'<div class="grid cards index-info" markdown>\n\n{body}\n\n</div>\n'
+
+
+def gen_homepage(leaves: list[dict]) -> str:
+    """首页轮播图（每个叶子相册一张幻灯片）+ 照片故事流"""
     slides_css, slides_html = [], []
-    for i, (cat, photos) in enumerate(categories.items(), 1):
-        meta = CATEGORIES.get(cat, {"subtitle": cat.upper(), "poem": ""})
-        cover = url(f"pictures/{cat}/{photos[0].name}") if photos else ""
+    for i, leaf in enumerate(leaves, 1):
+        cover = url(leaf["cover"]) if leaf.get("cover") else ""
         slides_css.append(
             f".carousel-item--{i} .carousel-item__image {{ background-image: url('{cover}'); }}"
         )
@@ -113,10 +136,10 @@ def gen_homepage(categories: dict[str, list[Path]]) -> str:
 <div class="carousel-item__image"></div>
 <div class="carousel-item__info">
 <div class="carousel-item__container">
-<h2 class="carousel-item__subtitle">{meta["subtitle"]}</h2>
-<h1 class="carousel-item__title">{cat}</h1>
-<p class="carousel-item__description">{meta["poem"]}</p>
-<a href="{url(cat)}/" class="carousel-item__btn">Explore</a>
+<h2 class="carousel-item__subtitle">{leaf["subtitle"]}</h2>
+<h1 class="carousel-item__title">{leaf["name"]}</h1>
+<p class="carousel-item__description">{leaf.get("poem", "")}</p>
+<a href="{url(leaf["href"])}" class="carousel-item__btn">Explore</a>
 </div>
 </div>
 </div>'''
@@ -160,34 +183,73 @@ def gen_homepage(categories: dict[str, list[Path]]) -> str:
     return carousel + "\n\n" + "\n\n".join(stories) + "\n"
 
 
+def write(rel: str, content: str):
+    out = DOCS / rel
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(content, encoding="utf-8")
+    print(f"生成: docs/{rel}")
+
+
 def main():
     if not PIC_ROOT.exists():
-        raise SystemExit(f"目录不存在: {PIC_ROOT}\n请先创建并放入分类文件夹和照片。")
+        raise SystemExit(f"目录不存在: {PIC_ROOT}")
 
-    categories = {}
-    for d in sorted(PIC_ROOT.iterdir()):
-        if d.is_dir() and not d.name.startswith("."):
-            photos = list_photos(d)
-            if photos:
-                categories[d.name] = photos
-            else:
-                print(f"  [跳过] 空分类: {d.name}")
+    leaves = []  # 首页轮播用：每个叶子相册 {name, subtitle, poem, href, cover}
 
-    if not categories:
-        raise SystemExit("docs/pictures/ 下没有任何照片。")
+    for top, cfg in GALLERIES.items():
+        section_cards = []
+        for sec, sec_cfg in cfg["sections"].items():
+            loc_cards = []
+            for loc in sec_cfg["locations"]:
+                photos = list_photos(loc["folder"])
+                if not photos:
+                    continue
+                cover = f"pictures/{loc['folder']}/{photos[0].name}"
+                # 叶子：照片墙（深度 3，如 旅游/徒步/云南/）
+                rel_base = f"{top}/{sec}/{loc['name']}"
+                write(
+                    f"{rel_base}/index.md",
+                    wall_page(loc["name"], loc.get("poem", ""), photos, loc["folder"], 3),
+                )
+                loc_cards.append({
+                    "name": loc["name"], "href": f"{loc['name']}/",
+                    "cover": cover, "location": loc.get("location", ""),
+                    "desc": loc.get("desc", ""),
+                })
+                leaves.append({
+                    "name": loc["name"], "subtitle": loc.get("location", sec).upper() or sec.upper(),
+                    "href": f"{rel_base}/", "cover": cover,
+                })
+            if loc_cards:
+                # 二级列表页（深度 2，如 旅游/徒步/）
+                write(
+                    f"{top}/{sec}/index.md",
+                    card_list_page(sec, sec_cfg.get("poem", ""), loc_cards, 2),
+                )
+                section_cards.append({
+                    "name": sec, "href": f"{sec}/",
+                    "cover": loc_cards[0]["cover"],
+                    "location": "", "desc": "",
+                })
+        if section_cards:
+            # 一级列表页（深度 1，如 旅游/）
+            write(
+                f"{top}/index.md",
+                card_list_page(top, cfg.get("poem", ""), section_cards, 1),
+            )
 
-    # 首页
-    (DOCS / "index.md").write_text(gen_homepage(categories), encoding="utf-8")
-    print(f"生成首页: docs/index.md （{len(categories)} 个轮播分类）")
+    for title, cfg in PAGES.items():
+        photos = list_photos(cfg["folder"])
+        if not photos:
+            continue
+        write(title + "/index.md", wall_page(title, cfg.get("poem", ""), photos, cfg["folder"], 1))
+        leaves.append({
+            "name": title, "subtitle": title.upper(),
+            "href": f"{title}/", "cover": f"pictures/{cfg['folder']}/{photos[0].name}",
+        })
 
-    # 分类页
-    for cat, photos in categories.items():
-        out = DOCS / cat / "index.md"
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(gen_category_page(cat, photos), encoding="utf-8")
-        print(f"生成分类页: docs/{cat}/index.md （{len(photos)} 张照片）")
-
-    print("\n完成。接下来运行: mkdocs serve 预览 / mkdocs gh-deploy 部署")
+    write("index.md", gen_homepage(leaves))
+    print(f"\n完成，共 {len(leaves)} 个相册。接下来: mkdocs serve 预览 / git push 自动部署")
 
 
 if __name__ == "__main__":

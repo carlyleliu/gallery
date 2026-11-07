@@ -25,6 +25,22 @@ theme:
         name: 日间模式
   features:
     - navigation.instant
+    - navigation.indexes
+    - navigation.expand
+
+nav:
+  - 首页: index.md
+  - 旅游:
+    - 旅游/index.md
+    - 徒步:
+      - 旅游/徒步/index.md
+      - 云南: 旅游/徒步/云南/index.md
+      - 桂林: 旅游/徒步/桂林/index.md
+      - 稻城: 旅游/徒步/稻城/index.md
+    - 风景:
+      - 旅游/风景/index.md
+      - 海岛: 旅游/风景/海岛/index.md
+  - 扫街: 扫街/index.md
 
 plugins:
   - search:
