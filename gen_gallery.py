@@ -64,6 +64,7 @@ MAP_POINTS = [
 # YouTube 视频列表：id 为视频 ID（https://www.youtube.com/watch?v= 后面的部分）
 VIDEOS = [
     {"id": "IqaTQ-dbrWU", "title": "麦理浩径徒步", "desc": ""},
+    {"id": "wpjfHOmje5Y", "title": "武功山", "desc": ""},
     # {"id": "视频ID", "title": "标题", "desc": "说明"},
 ]
 
