@@ -41,6 +41,7 @@ nav:
       - 旅游/风景/index.md
       - 海岛: 旅游/风景/海岛/index.md
   - 扫街: 扫街/index.md
+  - 视频: 视频/index.md
   - 地图: map.md
 
 plugins:

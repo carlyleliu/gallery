@@ -61,6 +61,11 @@ MAP_POINTS = [
     {"name": "扫街", "url": "扫街/", "folder": "shenzhenwan", "lat": 22.52, "lng": 114.06, "location": "深圳湾"},
 ]
 
+# YouTube 视频列表：id 为视频 ID（https://www.youtube.com/watch?v= 后面的部分）
+VIDEOS = [
+    # {"id": "视频ID", "title": "标题", "desc": "说明"},
+]
+
 # 首页照片故事流：img 为 pictures/ 下的相对路径，side 决定竖排文字在左还是右
 STORIES = [
     {
@@ -263,6 +268,7 @@ def main():
 
     write("index.md", gen_homepage(leaves))
     write_map()
+    write_videos()
     print(f"\n完成，共 {len(leaves)} 个相册。接下来: mkdocs serve 预览 / git push 自动部署")
 
 
@@ -293,6 +299,31 @@ def write_map():
     out = DOCS / "map.md"
     out.write_text(FRONTMATTER + content, encoding="utf-8")
     print("生成: docs/map.md")
+
+
+def write_videos():
+    """生成视频页：YouTube nocookie 嵌入，响应式 16:9。"""
+    if not VIDEOS:
+        body = "# 视频\n\n暂无视频。\n"
+    else:
+        items = []
+        for v in VIDEOS:
+            desc = f'<p class="video-desc">{v["desc"]}</p>' if v.get("desc") else ""
+            items.append(
+                f'<div class="video-item">\n'
+                f'<h3>{v.get("title", "")}</h3>\n'
+                f'<div class="video-frame"><iframe '
+                f'src="https://www.youtube-nocookie.com/embed/{v["id"]}" '
+                f'title="{v.get("title", "")}" frameborder="0" '
+                f'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" '
+                f'allowfullscreen></iframe></div>\n'
+                f'{desc}\n</div>'
+            )
+        body = "# 视频\n\n" + "\n\n".join(items) + "\n"
+    out = DOCS / "视频" / "index.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(FRONTMATTER + body, encoding="utf-8")
+    print("生成: docs/视频/index.md")
 
 
 if __name__ == "__main__":
