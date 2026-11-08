@@ -22,3 +22,9 @@ hide:
 <div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/4ceHq9_3UQI" title="黄山 雪景" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
 
 </div>
+
+<div class="video-item">
+<h3>黄山混剪 4K</h3>
+<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/EkZxGZvaMog" title="黄山混剪 4K" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+
+</div>
