@@ -65,6 +65,7 @@ MAP_POINTS = [
 VIDEOS = [
     {"id": "IqaTQ-dbrWU", "title": "麦理浩径徒步", "desc": ""},
     {"id": "wpjfHOmje5Y", "title": "武功山", "desc": ""},
+    {"id": "4ceHq9_3UQI", "title": "黄山 雪景", "desc": ""},
     # {"id": "视频ID", "title": "标题", "desc": "说明"},
 ]
 
