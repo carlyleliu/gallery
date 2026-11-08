@@ -2,3 +2,6 @@ div#waline{margin-top:.8rem}.wl-editor{min-height:3em!important}.wl-count{font-s
 /* 暗色主题下 logo 反色为白色（SVG 以 img 引入，无法继承页面 CSS 变量） */
 [data-md-color-scheme=slate] .md-header__button.md-logo img,
 [data-md-color-scheme=slate] .md-nav__button.md-logo img{filter:invert(1) brightness(1.7)}
+/* 地图页容器高度，Leaflet 需要明确的尺寸 */
+#gallery-map{height:34rem;width:100%;border-radius:.16rem;box-shadow:0 .2rem 1rem rgba(0,0,0,.15)}
+@media screen and (max-width:768px){#gallery-map{height:22rem}}

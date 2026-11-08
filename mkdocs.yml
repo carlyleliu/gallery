@@ -41,6 +41,7 @@ nav:
       - 旅游/风景/index.md
       - 海岛: 旅游/风景/海岛/index.md
   - 扫街: 扫街/index.md
+  - 地图: map.md
 
 plugins:
   - search:
@@ -58,8 +59,11 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 extra_css:
+  - https://unpkg.com/leaflet@1.9.4/dist/leaflet.css
   - stylesheets/extra.css
 
 extra_javascript:
+  - https://unpkg.com/leaflet@1.9.4/dist/leaflet.js
   - javascripts/lazyload.iife.min.js
   - javascripts/after.min.js
+  - javascripts/map.js

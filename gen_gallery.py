@@ -51,6 +51,16 @@ PAGES = {
     "扫街": {"folder": "shenzhenwan", "poem": ""},
 }
 
+# 地图标记点（Leaflet + OSM）：name 显示在弹窗，url 为照片墙相对路径，lat/lng 为经纬度
+# cover 留空则自动取该相册第一张照片
+MAP_POINTS = [
+    {"name": "云南", "url": "旅游/徒步/云南/", "folder": "yunnan", "lat": 25.0, "lng": 101.5, "location": "云南"},
+    {"name": "桂林", "url": "旅游/徒步/桂林/", "folder": "guilin", "lat": 25.27, "lng": 110.29, "location": "广西 · 桂林"},
+    {"name": "稻城", "url": "旅游/徒步/稻城/", "folder": "daocheng", "lat": 29.03, "lng": 100.30, "location": "四川 · 甘孜"},
+    {"name": "海岛", "url": "旅游/风景/海岛/", "folder": "haidao", "lat": 19.5, "lng": 109.5, "location": ""},
+    {"name": "扫街", "url": "扫街/", "folder": "shenzhenwan", "lat": 22.52, "lng": 114.06, "location": "深圳湾"},
+]
+
 # 首页照片故事流：img 为 pictures/ 下的相对路径，side 决定竖排文字在左还是右
 STORIES = [
     {
@@ -252,7 +262,37 @@ def main():
         })
 
     write("index.md", gen_homepage(leaves))
+    write_map()
     print(f"\n完成，共 {len(leaves)} 个相册。接下来: mkdocs serve 预览 / git push 自动部署")
+
+
+def write_map():
+    """生成地图页：内嵌 JSON 标记数据，map.js 读取后渲染 Leaflet 标记。"""
+    import json
+    pts = []
+    for p in MAP_POINTS:
+        photos = list_photos(p["folder"])
+        cover = p.get("cover") or (f"pictures/{p['folder']}/{photos[0].name}" if photos else "")
+        pts.append({
+            "name": p["name"], "url": url(p["url"]),
+            "lat": p["lat"], "lng": p["lng"], "location": p.get("location", ""),
+            # 站点部署在 /gallery/ 子路径，封面用相对根路径避免在 /map/ 下拼错
+            "cover": url(cover) if cover else "",
+        })
+    # 所有页面同级（use_directory_urls 下 map/ 是一级目录），返回上一级即站点根
+    for p in pts:
+        p["url"] = "../" + p["url"]
+        if p["cover"]:
+            p["cover"] = "../" + p["cover"]
+    data = json.dumps(pts, ensure_ascii=False)
+    content = (
+        "# 地图\n\n"
+        '<div id="gallery-map"></div>\n\n'
+        f'<script id="map-data" type="application/json">{data}</script>\n'
+    )
+    out = DOCS / "map.md"
+    out.write_text(FRONTMATTER + content, encoding="utf-8")
+    print("生成: docs/map.md")
 
 
 if __name__ == "__main__":
