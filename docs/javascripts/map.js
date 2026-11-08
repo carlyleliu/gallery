@@ -12,15 +12,35 @@ document$.subscribe(function () {
 
   var map = L.map(el, { scrollWheelZoom: true });
 
-  // 高德街道瓦片（GCJ-02 坐标系）
-  L.tileLayer(
+  // 高德街道瓦片（GCJ-02 坐标系）；加载失败时自动回退 OSM（WGS-84）
+  var usingAmap = true;
+  var amapLayer = L.tileLayer(
     "https://webrat0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}",
     {
       subdomains: ["1", "2", "3", "4"],
       maxZoom: 18,
       attribution: '&copy; <a href="https://lbs.amap.com/">高德地图</a>',
     }
-  ).addTo(map);
+  );
+  var osmLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 贡献者',
+  });
+  amapLayer.addTo(map);
+
+  var tileErrors = 0;
+  var markerGroup = L.layerGroup().addTo(map);
+  amapLayer.on("tileerror", function () {
+    // 个别瓦片失败属正常（缩放边缘等），连续失败才判定底图不可用
+    if (!usingAmap) return;
+    if (++tileErrors >= 8) {
+      usingAmap = false;
+      map.removeLayer(amapLayer);
+      osmLayer.addTo(map);
+      renderMarkers(); // OSM 是 WGS-84，需用原始坐标重建标记
+    }
+  });
 
   // ---- WGS-84 -> GCJ-02（高德底图对齐用，标准换算法则，无需依赖库）----
   var PI = 3.1415926535897932384626;
@@ -69,25 +89,31 @@ document$.subscribe(function () {
     return;
   }
 
-  var bounds = [];
-  points.forEach(function (p) {
-    if (!p.lat || !p.lng) return;
-    var g = wgs2gcj(p.lng, p.lat); // 转成高德坐标
-    var marker = L.marker([g[1], g[0]]).addTo(map);
-    var cover = p.cover
-      ? '<a href="' + p.url + '"><img src="' + p.cover + '" alt="' + p.name +
-        '" style="width:180px;height:auto;display:block;margin-bottom:6px;"></a>'
-      : "";
-    marker.bindPopup(
-      '<div style="text-align:center">' + cover +
-        '<a href="' + p.url + '" style="font-weight:600">' + p.name + "</a>" +
-        (p.location ? '<div style="color:#888;font-size:.8em">' + p.location + "</div>" : "") +
-        "</div>"
-    );
-    bounds.push([g[1], g[0]]);
-  });
-
-  if (bounds.length) {
-    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 8 });
+  // 根据当前底图渲染标记：高德用 GCJ-02，OSM 用原始 WGS-84
+  function renderMarkers() {
+    markerGroup.clearLayers();
+    var bounds = [];
+    points.forEach(function (p) {
+      if (!p.lat || !p.lng) return;
+      var pos = usingAmap ? (function () { var g = wgs2gcj(p.lng, p.lat); return [g[1], g[0]]; })()
+                          : [p.lat, p.lng];
+      var marker = L.marker(pos).addTo(markerGroup);
+      var cover = p.cover
+        ? '<a href="' + p.url + '"><img src="' + p.cover + '" alt="' + p.name +
+          '" style="width:180px;height:auto;display:block;margin-bottom:6px;"></a>'
+        : "";
+      marker.bindPopup(
+        '<div style="text-align:center">' + cover +
+          '<a href="' + p.url + '" style="font-weight:600">' + p.name + "</a>" +
+          (p.location ? '<div style="color:#888;font-size:.8em">' + p.location + "</div>" : "") +
+          "</div>"
+      );
+      bounds.push(pos);
+    });
+    if (bounds.length) {
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 8 });
+    }
   }
+
+  renderMarkers();
 });
