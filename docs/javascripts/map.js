@@ -15,7 +15,7 @@ document$.subscribe(function () {
   // 高德街道瓦片（GCJ-02 坐标系）；加载失败时自动回退 OSM（WGS-84）
   var usingAmap = true;
   var amapLayer = L.tileLayer(
-    "https://webrat0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}",
+    "https://wprd0{s}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scl=1&style=7",
     {
       subdomains: ["1", "2", "3", "4"],
       maxZoom: 18,
